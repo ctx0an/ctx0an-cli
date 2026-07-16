@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-ctx0an.py — Codex: an autonomous software-development agent for Termux.
+ctx0an.py — Ctx0an: an autonomous software-development agent for Termux.
 
-Codex is a single-file, dependency-light CLI agent. It uses Google's Gemini
+Ctx0an is a single-file, dependency-light CLI agent. It uses Google's Gemini
 models through the modern ``google-genai`` SDK and can *act* on your device:
 reading, writing and patching files, and executing shell commands — every
 command gated behind an explicit ``[Y/n]`` keyboard confirmation.
@@ -15,13 +15,13 @@ Setup on Termux
     export GEMINI_API_KEY="your-api-key"        # add to ~/.bashrc to persist
 
     # optional: make it a real command
-    chmod +x ctx0an.py && cp ctx0an.py $PREFIX/bin/codex
+    chmod +x ctx0an.py && cp ctx0an.py $PREFIX/bin/ctx0an
 
 Usage
 -----
-    codex                                       # interactive workspace mode
-    codex "create a flask app and run it on port 8080"
-    codex -m flash "fix the traceback in main.py and rerun it"
+    ctx0an                                       # interactive workspace mode
+    ctx0an "create a flask app and run it on port 8080"
+    ctx0an -m flash "fix the traceback in main.py and rerun it"
 
 Modes
 -----
@@ -114,14 +114,14 @@ global_agent = None
 
 def _import_rich() -> bool:
     """Return True if `rich` is importable, installing it first if needed."""
-    if os.environ.get("CODEX_NO_RICH"):          # escape hatch / testing
+    if os.environ.get("CTX0AN_NO_RICH"):          # escape hatch / testing
         return False
     try:
         import rich  # noqa: F401
         return True
     except ImportError:
         pass
-    print("[codex] 'rich' not found — attempting: pip install rich",
+    print("[ctx0an] 'rich' not found — attempting: pip install rich",
           file=sys.stderr)
     try:
         subprocess.run(
@@ -132,7 +132,7 @@ def _import_rich() -> bool:
         import rich  # noqa: F401
         return True
     except Exception:
-        print("[codex] could not install 'rich' — using plain ANSI output.",
+        print("[ctx0an] could not install 'rich' — using plain ANSI output.",
               file=sys.stderr)
         return False
 
@@ -268,7 +268,7 @@ class UI:
         """Startup banner showing model, working directory and safety note."""
         if self.console:
             body = Text()
-            body.append("Codex", style="bold cyan")
+            body.append("Ctx0an", style="bold cyan")
             body.append(f"  v{__version__} · {mode} mode\n", style="dim")
             body.append(f"model: {model}\n")
             body.append(f"cwd:   {os.getcwd()}\n", style="dim")
@@ -281,7 +281,7 @@ class UI:
                             "exit to quit.", style="dim")
             self.console.print(Panel(body, border_style="cyan", expand=False))
         else:
-            print(_ansi(f"=== Codex v{__version__} ({mode} mode) ===",
+            print(_ansi(f"=== Ctx0an v{__version__} ({mode} mode) ===",
                         _ANSI.CYAN, _ANSI.BOLD))
             print(f"model: {model}")
             print(f"cwd:   {os.getcwd()}")
@@ -1157,7 +1157,7 @@ def _build_tools(types: Any) -> list:
 # System instruction: defines the agent's behaviour and self-healing loop
 # --------------------------------------------------------------------------
 
-SYSTEM_INSTRUCTION = """You are Codex, an autonomous senior software engineer running on the user's Android device inside Termux (a Linux terminal environment). You do not just chat — you pair-program with the user by actually doing the work: exploring, reading, writing, patching and executing code through the provided tools.
+SYSTEM_INSTRUCTION = """You are Ctx0an, an autonomous senior software engineer running on the user's Android device inside Termux (a Linux terminal environment). You do not just chat — you pair-program with the user by actually doing the work: exploring, reading, writing, patching and executing code through the provided tools.
 
 # Operating loop
 Always follow a strict Think -> Act -> Observe cycle:
@@ -1220,7 +1220,7 @@ def _load_genai() -> tuple[Any, Any]:
 # --------------------------------------------------------------------------
 
 def _get_mcp_config_file() -> Path:
-    cfg_dir = Path.home() / ".codex"
+    cfg_dir = Path.home() / ".ctx0an"
     cfg_dir.mkdir(parents=True, exist_ok=True)
     cfg_file = cfg_dir / "mcp_config.json"
     if not cfg_file.exists():
@@ -1737,7 +1737,7 @@ def _wrap_openai_response(res: dict, types: Any) -> Any:
 # The agent: owns the conversation history and the Think->Act->Observe loop
 # --------------------------------------------------------------------------
 
-class CodexAgent:
+class Ctx0anAgent:
     """Autonomous coding agent driven by manual Gemini function calling."""
 
     def __init__(self, model_name: str, api_key: str) -> None:
@@ -2040,7 +2040,7 @@ Anything else is sent to the agent as a task."""
 
 
 def _get_custom_models() -> dict:
-    config_dir = Path.home() / ".codex"
+    config_dir = Path.home() / ".ctx0an"
     config_dir.mkdir(parents=True, exist_ok=True)
     models_file = config_dir / "models.json"
     
@@ -2087,7 +2087,7 @@ CUSTOM_MODELS = _get_custom_models()
 
 
 def _get_session_dir() -> Path:
-    session_dir = Path.home() / ".codex" / "sessions"
+    session_dir = Path.home() / ".ctx0an" / "sessions"
     session_dir.mkdir(parents=True, exist_ok=True)
     return session_dir
 
@@ -2167,7 +2167,7 @@ GUI_HTML = r'''<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Codex Web Chat UI</title>
+    <title>Ctx0an Web Chat UI</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -2710,7 +2710,7 @@ GUI_HTML = r'''<!DOCTYPE html>
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="brand">
-            <h1>Codex UI</h1>
+            <h1>Ctx0an UI</h1>
             <span id="version">v1.0.0</span>
         </div>
 
@@ -2749,9 +2749,9 @@ GUI_HTML = r'''<!DOCTYPE html>
         <!-- Chat Area -->
         <div class="chat-area" id="chat-window">
             <div class="message bot">
-                <div class="message-sender">Codex</div>
+                <div class="message-sender">Ctx0an</div>
                 <div class="message-bubble">
-                    <p>Hello! I am Codex, your autonomous software-development partner. How can I help you in your workspace today?</p>
+                    <p>Hello! I am Ctx0an, your autonomous software-development partner. How can I help you in your workspace today?</p>
                 </div>
             </div>
         </div>
@@ -2759,7 +2759,7 @@ GUI_HTML = r'''<!DOCTYPE html>
         <!-- Input Area -->
         <div class="input-container">
             <div class="input-bar">
-                <textarea id="prompt-input" placeholder="Ask Codex to write code, debug, or explore..." onkeydown="handleKeydown(event)"></textarea>
+                <textarea id="prompt-input" placeholder="Ask Ctx0an to write code, debug, or explore..." onkeydown="handleKeydown(event)"></textarea>
                 <button class="btn-send" onclick="sendPrompt()">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                 </button>
@@ -2980,7 +2980,7 @@ GUI_HTML = r'''<!DOCTYPE html>
             const msg = document.createElement('div');
             msg.className = 'message bot';
             msg.innerHTML = `
-                <div class="message-sender">Codex</div>
+                <div class="message-sender">Ctx0an</div>
                 <div class="message-bubble">${htmlContent}</div>
             `;
             chat.appendChild(msg);
@@ -3194,7 +3194,7 @@ GUI_HTML = r'''<!DOCTYPE html>
 class ThreadingHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
     daemon_threads = True
 
-class CodexHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
+class Ctx0anHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
     def log_message(self, format, *args):
         pass
@@ -3370,15 +3370,15 @@ class CodexHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         self.wfile.write(json.dumps(data).encode("utf-8"))
 
 
-def run_gui_server(agent: CodexAgent, port: int = 8080) -> None:
+def run_gui_server(agent: Ctx0anAgent, port: int = 8080) -> None:
     global global_agent, GUI_MODE
     global_agent = agent
     GUI_MODE = True
     
-    server = ThreadingHTTPServer(("127.0.0.1", port), CodexHTTPRequestHandler)
+    server = ThreadingHTTPServer(("127.0.0.1", port), Ctx0anHTTPRequestHandler)
     url = f"http://127.0.0.1:{port}"
     
-    ui.success(f"Starting Codex Web GUI on {url} ...")
+    ui.success(f"Starting Ctx0an Web GUI on {url} ...")
     ui.info("Press Ctrl+C in this terminal to stop the server.")
     
     def open_browser():
@@ -3393,13 +3393,13 @@ def run_gui_server(agent: CodexAgent, port: int = 8080) -> None:
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        ui.info("\nStopping Codex Web GUI...")
+        ui.info("\nStopping Ctx0an Web GUI...")
     finally:
         server.server_close()
         ui.success("Server stopped.")
 
 
-def interactive_loop(agent: CodexAgent) -> None:
+def interactive_loop(agent: Ctx0anAgent) -> None:
     """Interactive workspace mode: multi-turn session with memory (TUI dashboard)."""
     import shutil
     import random
@@ -3692,8 +3692,8 @@ def build_parser() -> argparse.ArgumentParser:
     ctx0an.py write a python script to parse logs and run it
 """
     parser = argparse.ArgumentParser(
-        prog="codex",
-        description="Codex — an autonomous software-development agent "
+        prog="ctx0an",
+        description="Ctx0an — an autonomous software-development agent "
                     "for Termux, powered by Gemini.",
         epilog=epilog,
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -3772,7 +3772,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     try:
-        agent = CodexAgent(model, api_key)
+        agent = Ctx0anAgent(model, api_key)
     except SystemExit:
         raise                               # missing SDK -> guided exit
     except Exception as exc:

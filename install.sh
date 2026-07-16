@@ -1,5 +1,5 @@
 #!/bin/bash
-# install.sh - Installer for Codex Agent (ctx0an) on Termux, Linux, and macOS.
+# install.sh - Installer for Ctx0an Agent (ctx0an) on Termux, Linux, and macOS.
 
 set -e
 
@@ -9,7 +9,7 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}=== Codex Agent Installer ===${NC}"
+echo -e "${BLUE}=== Ctx0an Agent Installer ===${NC}"
 
 # 1. Detect environment
 IS_TERMUX=false
@@ -50,7 +50,7 @@ else
 fi
 
 # 4. Copy executable script
-echo -e "${BLUE}[3/4] Installing codex script to PATH...${NC}"
+echo -e "${BLUE}[3/4] Installing ctx0an script to PATH...${NC}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SOURCE_FILE="$SCRIPT_DIR/ctx0an.py"
 
@@ -61,7 +61,7 @@ fi
 
 if [ "$IS_TERMUX" = true ]; then
     DEST_DIR="$PREFIX/bin"
-    DEST_FILE="$DEST_DIR/codex"
+    DEST_FILE="$DEST_DIR/ctx0an"
     cp "$SOURCE_FILE" "$DEST_FILE"
     chmod +x "$DEST_FILE"
     echo -e "${GREEN}Installed to $DEST_FILE${NC}"
@@ -69,12 +69,12 @@ else
     # Try installing to local bin or fallback to global bin (needs sudo)
     LOCAL_BIN="$HOME/.local/bin"
     if [ -d "$LOCAL_BIN" ] && [[ ":$PATH:" == *":$LOCAL_BIN:"* ]]; then
-        DEST_FILE="$LOCAL_BIN/codex"
+        DEST_FILE="$LOCAL_BIN/ctx0an"
         cp "$SOURCE_FILE" "$DEST_FILE"
         chmod +x "$DEST_FILE"
         echo -e "${GREEN}Installed to $DEST_FILE${NC}"
     else
-        DEST_FILE="/usr/local/bin/codex"
+        DEST_FILE="/usr/local/bin/ctx0an"
         echo -e "${YELLOW}Installing to $DEST_FILE (may require sudo privileges)...${NC}"
         sudo cp "$SOURCE_FILE" "$DEST_FILE"
         sudo chmod +x "$DEST_FILE"
@@ -83,11 +83,11 @@ else
 fi
 
 # 5. Initialize config directory
-echo -e "${BLUE}[4/4] Setting up Codex directory structure...${NC}"
-mkdir -p "$HOME/.codex/sessions"
+echo -e "${BLUE}[4/4] Setting up Ctx0an directory structure...${NC}"
+mkdir -p "$HOME/.ctx0an/sessions"
 
 # Create a default template config if missing
-CONFIG_FILE="$HOME/.codex/mcp_config.json"
+CONFIG_FILE="$HOME/.ctx0an/mcp_config.json"
 if [ ! -f "$CONFIG_FILE" ]; then
     cat <<EOT > "$CONFIG_FILE"
 {
@@ -98,7 +98,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
         "-y",
         "@modelcontextprotocol/server-sqlite",
         "--db-path",
-        "$HOME/.codex/sqlite.db"
+        "$HOME/.ctx0an/sqlite.db"
       ]
     }
   }
@@ -107,13 +107,13 @@ EOT
     echo -e "${GREEN}Created default configuration template in $CONFIG_FILE${NC}"
 fi
 
-echo -e "\n${GREEN}=== Codex Installed Successfully! ===${NC}"
+echo -e "\n${GREEN}=== Ctx0an Installed Successfully! ===${NC}"
 echo -e "${YELLOW}To get started, follow these steps:${NC}"
 echo -e "1. Get a Gemini API key from: ${BLUE}https://aistudio.google.com/apikey${NC}"
 echo -e "2. Set the key in your terminal session:"
 echo -e "   ${GREEN}export GEMINI_API_KEY='your-api-key-here'${NC}"
 echo -e "   (Add this line to your ~/.bashrc or ~/.zshrc to persist it)"
 echo -e "3. Start the interactive console dashboard:"
-echo -e "   ${GREEN}codex${NC}"
+echo -e "   ${GREEN}ctx0an${NC}"
 echo -e "   Or start the web dashboard:"
-echo -e "   ${GREEN}codex --gui${NC}\n"
+echo -e "   ${GREEN}ctx0an --gui${NC}\n"
