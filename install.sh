@@ -19,9 +19,21 @@ fi
 
 # 2. Check and install system dependencies
 if [ "$IS_TERMUX" = true ]; then
-    echo -e "${BLUE}[1/4] Detecting Termux. Installing dependencies via pkg...${NC}"
-    pkg update -y || true
-    pkg install -y python python-cryptography nodejs-lts git rust
+    echo -e "${BLUE}[1/4] Detecting Termux. Checking package dependencies...${NC}"
+    packages=(python python-cryptography nodejs-lts git rust)
+    to_install=()
+    for pkg in "${packages[@]}"; do
+        if ! dpkg -s "$pkg" &>/dev/null; then
+            to_install+=("$pkg")
+        fi
+    done
+    if [ ${#to_install[@]} -ne 0 ]; then
+        echo -e "${YELLOW}Installing missing packages: ${to_install[*]}${NC}"
+        pkg update -y || true
+        pkg install -y "${to_install[@]}"
+    else
+        echo -e "${GREEN}All system packages are already installed.${NC}"
+    fi
     
     # Fix AttributeError: module 'os' has no attribute 'link' on Termux Python 3.14+
     SITE_PACKAGES=$(python3 -c "import site; print(site.getsitepackages()[0])" 2>/dev/null || echo "")
@@ -44,9 +56,17 @@ fi
 # 3. Install Python SDK requirements
 echo -e "${BLUE}[2/4] Installing Python packages...${NC}"
 if [ "$IS_TERMUX" = true ]; then
-    pip install google-genai rich --extra-index-url https://termux-user-repository.github.io/pypi/
+    if python3 -c "from google import genai; import rich" &>/dev/null; then
+        echo -e "${GREEN}Python packages google-genai and rich are already installed.${NC}"
+    else
+        pip install google-genai rich --extra-index-url https://termux-user-repository.github.io/pypi/
+    fi
 else
-    python3 -m pip install --upgrade google-genai rich || pip3 install google-genai rich
+    if python3 -c "from google import genai; import rich" &>/dev/null; then
+        echo -e "${GREEN}Python packages google-genai and rich are already installed.${NC}"
+    else
+        python3 -m pip install --upgrade google-genai rich || pip3 install google-genai rich
+    fi
 fi
 
 # 4. Copy executable script
@@ -62,23 +82,35 @@ fi
 if [ "$IS_TERMUX" = true ]; then
     DEST_DIR="$PREFIX/bin"
     DEST_FILE="$DEST_DIR/ctx0an"
-    cp "$SOURCE_FILE" "$DEST_FILE"
-    chmod +x "$DEST_FILE"
-    echo -e "${GREEN}Installed to $DEST_FILE${NC}"
+    if [ -f "$DEST_FILE" ] && cmp -s "$SOURCE_FILE" "$DEST_FILE"; then
+        echo -e "${GREEN}Script is already up-to-date at $DEST_FILE${NC}"
+    else
+        cp "$SOURCE_FILE" "$DEST_FILE"
+        chmod +x "$DEST_FILE"
+        echo -e "${GREEN}Installed/Updated script at $DEST_FILE${NC}"
+    fi
 else
     # Try installing to local bin or fallback to global bin (needs sudo)
     LOCAL_BIN="$HOME/.local/bin"
     if [ -d "$LOCAL_BIN" ] && [[ ":$PATH:" == *":$LOCAL_BIN:"* ]]; then
         DEST_FILE="$LOCAL_BIN/ctx0an"
-        cp "$SOURCE_FILE" "$DEST_FILE"
-        chmod +x "$DEST_FILE"
-        echo -e "${GREEN}Installed to $DEST_FILE${NC}"
+        if [ -f "$DEST_FILE" ] && cmp -s "$SOURCE_FILE" "$DEST_FILE"; then
+            echo -e "${GREEN}Script is already up-to-date at $DEST_FILE${NC}"
+        else
+            cp "$SOURCE_FILE" "$DEST_FILE"
+            chmod +x "$DEST_FILE"
+            echo -e "${GREEN}Installed/Updated script at $DEST_FILE${NC}"
+        fi
     else
         DEST_FILE="/usr/local/bin/ctx0an"
-        echo -e "${YELLOW}Installing to $DEST_FILE (may require sudo privileges)...${NC}"
-        sudo cp "$SOURCE_FILE" "$DEST_FILE"
-        sudo chmod +x "$DEST_FILE"
-        echo -e "${GREEN}Installed to $DEST_FILE${NC}"
+        if [ -f "$DEST_FILE" ] && cmp -s "$SOURCE_FILE" "$DEST_FILE"; then
+            echo -e "${GREEN}Script is already up-to-date at $DEST_FILE${NC}"
+        else
+            echo -e "${YELLOW}Installing/Updating $DEST_FILE (may require sudo privileges)...${NC}"
+            sudo cp "$SOURCE_FILE" "$DEST_FILE"
+            sudo chmod +x "$DEST_FILE"
+            echo -e "${GREEN}Installed/Updated script at $DEST_FILE${NC}"
+        fi
     fi
 fi
 
