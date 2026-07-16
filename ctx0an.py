@@ -3730,6 +3730,65 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def setup_missing_api_key(env_var: str, provider: str, ref_url: str) -> str:
+    """Prompt the user for a missing API key and save it to their shell configuration."""
+    if not sys.stdin.isatty() or GUI_MODE:
+        return ""
+    
+    print(_ansi(f"\n[!] Configuration missing: {env_var} is not set.", _ANSI.YELLOW, _ANSI.BOLD))
+    print(f"You can get an API key from: {ref_url}")
+    try:
+        response = input("Would you like to configure it now? [y/N]: ").strip().lower()
+        if response not in ('y', 'yes'):
+            return ""
+        
+        key = input(f"Enter your {env_var}: ").strip()
+        if not key:
+            return ""
+        
+        if os.name == 'nt':
+            try:
+                subprocess.run(["setx", env_var, key], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                print(_ansi(f"[+] Successfully set environment variable {env_var} permanently via setx.", _ANSI.GREEN))
+                return key
+            except Exception as e:
+                print(_ansi(f"Could not set environment variable via setx: {e}", _ANSI.RED))
+                return ""
+        else:
+            # Detect shell config file
+            home = Path.home()
+            candidates = [home / ".bashrc", home / ".zshrc", home / ".bash_profile", home / ".profile"]
+            config_file = None
+            for cand in candidates:
+                if cand.exists():
+                    config_file = cand
+                    break
+            if not config_file:
+                config_file = home / ".bashrc"
+                
+            try:
+                content = ""
+                if config_file.exists():
+                    content = config_file.read_text(encoding="utf-8")
+                
+                # Check if already present in some format
+                if f"export {env_var}=" not in content:
+                    prefix = "\n" if content and not content.endswith("\n") else ""
+                    with open(config_file, "a", encoding="utf-8") as f:
+                        f.write(f"{prefix}export {env_var}='{key}'\n")
+                    print(_ansi(f"[+] Successfully saved API key to {config_file}", _ANSI.GREEN))
+                    print(_ansi("Please reload your shell (e.g. source ~/.bashrc) for changes to take effect in other sessions.", _ANSI.DIM))
+                else:
+                    print(_ansi(f"Note: {env_var} is already referenced in {config_file}. Not modifying it.", _ANSI.YELLOW))
+                return key
+            except Exception as e:
+                print(_ansi(f"Could not save key to file: {e}", _ANSI.RED))
+                return ""
+    except (KeyboardInterrupt, EOFError):
+        print()
+        return ""
+
+
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     model = resolve_model(args.model)
@@ -3761,6 +3820,9 @@ def main(argv: list[str] | None = None) -> int:
         api_key = os.environ.get(env_var, "").strip()
     else:
         api_key = ""
+
+    if not api_key:
+        api_key = setup_missing_api_key(env_var, provider, ref_url)
 
     if not api_key:
         ui.error(
