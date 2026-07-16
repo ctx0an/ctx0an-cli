@@ -21,7 +21,18 @@ fi
 if [ "$IS_TERMUX" = true ]; then
     echo -e "${BLUE}[1/4] Detecting Termux. Installing dependencies via pkg...${NC}"
     pkg update -y || true
-    pkg install -y python python-cryptography nodejs-lts git
+    pkg install -y python python-cryptography nodejs-lts git rust
+    
+    # Fix AttributeError: module 'os' has no attribute 'link' on Termux Python 3.14+
+    SITE_PACKAGES=$(python3 -c "import site; print(site.getsitepackages()[0])" 2>/dev/null || echo "")
+    if [ -n "$SITE_PACKAGES" ]; then
+        SITE_CUSTOMIZE="$SITE_PACKAGES/sitecustomize.py"
+        if [ ! -f "$SITE_CUSTOMIZE" ] || ! grep -q "os.link" "$SITE_CUSTOMIZE"; then
+            echo -e "${YELLOW}Applying os.link hotfix for Termux Python compatibility...${NC}"
+            mkdir -p "$SITE_PACKAGES"
+            echo -e "\nimport os\nif not hasattr(os, 'link'):\n    os.link = lambda src, dst, *args, **kwargs: None" >> "$SITE_CUSTOMIZE"
+        fi
+    fi
 else
     echo -e "${BLUE}[1/4] Detecting Linux/macOS. Checking command dependencies...${NC}"
     if ! command -v python3 &> /dev/null; then
