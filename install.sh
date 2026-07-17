@@ -143,31 +143,36 @@ fi
 if [ -z "$GEMINI_API_KEY" ]; then
     echo -e -n "\n${YELLOW}Would you like to configure your GEMINI_API_KEY now? [y/N]: ${NC}"
     read -r response
+    api_key=""
     if [[ "$response" =~ ^[Yy]$ ]]; then
         echo -e -n "Enter your Gemini API Key: "
         read -r api_key
-        if [ -n "$api_key" ]; then
-            # Determine shell config file
-            SHELL_CONFIG=""
-            if [ -f "$HOME/.bashrc" ]; then
-                SHELL_CONFIG="$HOME/.bashrc"
-            elif [ -f "$HOME/.zshrc" ]; then
-                SHELL_CONFIG="$HOME/.zshrc"
-            else
-                SHELL_CONFIG="$HOME/.bashrc"
-                touch "$SHELL_CONFIG"
-            fi
-            
-            # Append if not already present
-            if ! grep -q "export GEMINI_API_KEY=" "$SHELL_CONFIG"; then
-                # Ensure it ends with newline before appending
-                [ -n "$(tail -c1 "$SHELL_CONFIG" 2>/dev/null)" ] && echo "" >> "$SHELL_CONFIG"
-                echo "export GEMINI_API_KEY='$api_key'" >> "$SHELL_CONFIG"
-                echo -e "${GREEN}Saved API key to $SHELL_CONFIG${NC}"
-                export GEMINI_API_KEY="$api_key"
-            else
-                echo -e "${YELLOW}GEMINI_API_KEY is already defined in $SHELL_CONFIG. Skipping auto-write.${NC}"
-            fi
+    elif [ -n "$response" ]; then
+        # User may have pasted the key directly at the prompt
+        api_key="$response"
+    fi
+    if [ -n "$api_key" ]; then
+        # Determine shell config file
+        SHELL_CONFIG=""
+        if [ -f "$HOME/.bashrc" ]; then
+            SHELL_CONFIG="$HOME/.bashrc"
+        elif [ -f "$HOME/.zshrc" ]; then
+            SHELL_CONFIG="$HOME/.zshrc"
+        else
+            SHELL_CONFIG="$HOME/.bashrc"
+            touch "$SHELL_CONFIG"
+        fi
+        
+        # Append if not already present
+        if ! grep -q "export GEMINI_API_KEY=" "$SHELL_CONFIG"; then
+            # Ensure it ends with newline before appending
+            [ -n "$(tail -c1 "$SHELL_CONFIG" 2>/dev/null)" ] && echo "" >> "$SHELL_CONFIG"
+            echo "export GEMINI_API_KEY='$api_key'" >> "$SHELL_CONFIG"
+            echo -e "${GREEN}Saved API key to $SHELL_CONFIG${NC}"
+            export GEMINI_API_KEY="$api_key"
+        else
+            echo -e "${YELLOW}GEMINI_API_KEY is already defined in $SHELL_CONFIG. Skipping auto-write.${NC}"
+            export GEMINI_API_KEY="$api_key"
         fi
     fi
 fi

@@ -159,6 +159,7 @@ class _ANSI:
     RED = "\033[31m"
     GREEN = "\033[32m"
     YELLOW = "\033[33m"
+    BLUE = "\033[34m"
     CYAN = "\033[36m"
 
 
@@ -1744,6 +1745,7 @@ class Ctx0anAgent:
         genai, types = _load_genai()
         self._types = types
         self.model_name = model_name
+        self._api_key = api_key
         self.client = genai.Client(api_key=api_key)
         
         # Initialize MCP Manager and load tools
@@ -1797,9 +1799,9 @@ class Ctx0anAgent:
                 api_key_env = "OPENAI_API_KEY"
 
         if api_key_env == "CLAUDE_API_KEY":
-            api_key = (os.environ.get("CLAUDE_API_KEY") or os.environ.get("ANTHROPIC_API_KEY", "")).strip()
+            api_key = (self._api_key or os.environ.get("CLAUDE_API_KEY") or os.environ.get("ANTHROPIC_API_KEY", "")).strip()
         else:
-            api_key = os.environ.get(api_key_env, "").strip()
+            api_key = (self._api_key or os.environ.get(api_key_env, "")).strip()
             
         if not api_key:
             raise Exception(f"API key environment variable {api_key_env} is not set.")
