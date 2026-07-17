@@ -59,13 +59,14 @@ __version__ = "1.0.0"
 # Configuration constants
 # --------------------------------------------------------------------------
 
-DEFAULT_MODEL = "gemini-2.5-pro"          # advanced coding model (default)
-FALLBACK_MODEL = "gemini-2.5-flash"       # cheaper/faster fallback
+DEFAULT_MODEL = "gemini-3.5-flash"         # advanced coding model (default)
+FALLBACK_MODEL = "gemini-3.1-flash-lite"   # cheaper/faster fallback
 MODEL_ALIASES = {
-    "pro": "gemini-2.5-pro",
-    "flash": "gemini-2.5-flash",
-    "gemini-2.5-pro": "gemini-2.5-pro",
-    "gemini-2.5-flash": "gemini-2.5-flash",
+    "pro": "gemini-3.5-pro",
+    "flash": "gemini-3.5-flash",
+    "gemini-3.5-pro": "gemini-3.5-pro",
+    "gemini-3.5-flash": "gemini-3.5-flash",
+    "gemini-3.1-flash-lite": "gemini-3.1-flash-lite",
     "sonnet": "claude-3-5-sonnet-20241022",
     "claude-3-5-sonnet": "claude-3-5-sonnet-20241022",
     "haiku": "claude-3-5-haiku-20241022",
@@ -77,8 +78,9 @@ MODEL_ALIASES = {
 }
 
 MODEL_PROVIDERS = {
-    "gemini-2.5-pro": "gemini",
-    "gemini-2.5-flash": "gemini",
+    "gemini-3.5-pro": "gemini",
+    "gemini-3.5-flash": "gemini",
+    "gemini-3.1-flash-lite": "gemini",
     "claude-3-5-sonnet-20241022": "anthropic",
     "claude-3-5-haiku-20241022": "anthropic",
     "gpt-4o": "openai",
@@ -86,8 +88,9 @@ MODEL_PROVIDERS = {
 }
 
 MODEL_DESCRIPTIONS = {
-    "gemini-2.5-pro": "Google Gemini 2.5 Pro",
-    "gemini-2.5-flash": "Google Gemini 2.5 Flash",
+    "gemini-3.5-pro": "Google Gemini 3.5 Pro",
+    "gemini-3.5-flash": "Google Gemini 3.5 Flash",
+    "gemini-3.1-flash-lite": "Google Gemini 3.1 Flash-Lite",
     "claude-3-5-sonnet-20241022": "Anthropic Claude 3.5 Sonnet",
     "claude-3-5-haiku-20241022": "Anthropic Claude 3.5 Haiku",
     "gpt-4o": "OpenAI GPT-4o",
@@ -1971,10 +1974,13 @@ class Ctx0anAgent:
                 cand_tok = getattr(usage, "candidates_token_count", 0)
                 tot_tok = getattr(usage, "total_token_count", 0)
                 cost_str = ""
-                if "gemini-2.5-pro" in self.model_name:
+                if "gemini-3.5-pro" in self.model_name:
                     cost = (prompt_tok * 1.25 + cand_tok * 5.00) / 1_000_000
                     cost_str = f" (~${cost:.5f})"
-                elif "gemini-2.5-flash" in self.model_name:
+                elif "gemini-3.5-flash" in self.model_name:
+                    cost = (prompt_tok * 0.30 + cand_tok * 2.50) / 1_000_000
+                    cost_str = f" (~${cost:.5f})"
+                elif "gemini-3.1-flash-lite" in self.model_name:
                     cost = (prompt_tok * 0.075 + cand_tok * 0.30) / 1_000_000
                     cost_str = f" (~${cost:.5f})"
                 elif "claude-3-5-sonnet" in self.model_name:
@@ -2740,7 +2746,7 @@ GUI_HTML = r'''<!DOCTYPE html>
         <!-- Header -->
         <div class="header-bar">
             <div class="status-info">
-                <div class="status-badge" id="model-badge">gemini-2.5-pro</div>
+                <div class="status-badge" id="model-badge">gemini-3.5-flash</div>
                 <div class="token-info" id="session-info">0 history items | 0 staged files</div>
             </div>
             <div class="controls">
@@ -3710,8 +3716,8 @@ def build_parser() -> argparse.ArgumentParser:
         "-m", "--model",
         default=DEFAULT_MODEL,
         metavar="MODEL",
-        help="Model to use: 'pro' (gemini-2.5-pro, default), 'flash' "
-             "(gemini-2.5-flash), or any Gemini model id.",
+        help="Model to use: 'pro' (gemini-3.5-pro, default), 'flash' "
+             "(gemini-3.5-flash), or any Gemini model id.",
     )
     parser.add_argument(
         "-g", "--gui",
